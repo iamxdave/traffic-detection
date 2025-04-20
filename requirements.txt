@@ -1,0 +1,20 @@
+# Core dependencies
+numpy
+pandas
+opencv-python
+matplotlib
+tqdm
+ipykernel
+
+# Deep Learning Libraries
+torch
+torchvision
+torchaudio
+tensorflow  # For RNN/CNN (Keras-based)
+keras
+
+# YOLO
+ultralytics
+
+# Utilities
+scikit-learn
