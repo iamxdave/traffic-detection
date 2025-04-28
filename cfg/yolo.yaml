@@ -1,4 +1,28 @@
 model_type: yolo
+
+max_epochs: 100
+batch_size: 16
+subdivisions: 16
+width: 416
+height: 416
+channels: 3
+momentum: 0.949
+decay: 0.0005
+angle: 0
+saturation: 1.5
+exposure: 1.5
+hue: 0.1
+
+learning_rate: 0.00261
+burn_in: 1000
+max_batches: 500500
+policy: steps
+steps: [400000, 450000]
+scales: [0.1, 0.1]
+
+mosaic: 1
+cutmix: 1  
+
 layers:
   - type: convolutional
     in_channels: 3
@@ -61,5 +85,5 @@ layers:
 
   - type: fully_connected
     in_features: 1000
-    out_features: 80   # Assuming 80 output classes for YOLO
+    out_features: 80
     activation: softmax

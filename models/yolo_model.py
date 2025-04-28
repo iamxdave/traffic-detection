@@ -24,4 +24,5 @@ class YOLO(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
+        print(f"Input shape to YOLO model: {x.shape}")  # Debugowanie wymiarów wejściowych
         return self.layers(x)

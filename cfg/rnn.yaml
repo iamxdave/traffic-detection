@@ -1,4 +1,7 @@
 model_type: rnn
+
+max_epochs: 100
+
 layers:
   - type: rnn
     input_size: 64

@@ -1,4 +1,8 @@
 model_type: cnn
+
+max_epochs: 100
+
+# Optional, if you plan to use CutMix
 layers:
   - type: convolutional
     in_channels: 3
