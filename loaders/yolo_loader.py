@@ -48,7 +48,7 @@ class YOLODataset(Dataset):
         # Load and transform image
         image = Image.open(img_path).convert('RGB')
         image = self.transform(image)
-        print(f"Image shape: {image.shape}")  # Debugowanie wymiarów obrazu
+        print(f"Image shape: {image.shape}")
 
         # Load and process label
         boxes = []
@@ -61,25 +61,17 @@ class YOLODataset(Dataset):
             boxes = torch.zeros((0, 5))  # No objects in image
         else:
             boxes = torch.tensor(boxes, dtype=torch.float32)
-        print(f"Boxes shape: {boxes.shape}")  # Debugowanie wymiarów etykiet
+        print(f"Boxes shape: {boxes.shape}")
 
         return image, boxes
     
-    def collate_fn(self, batch, subdivisions=1):
-        print("Collate function called")
+    def collate_fn(self, batch):
         images, targets = zip(*batch)
-        images = torch.stack(images, 0)  # Stack images into a single tensor
-        print(f"Images shape after stacking: {images.shape}")  # Debugowanie wymiarów obrazów
+    
+        images = torch.stack(images, 0)
 
-        # Usuń dodatkowy wymiar, jeśli istnieje
-        if images.dim() == 5 and images.size(1) == 1:
-            images = images.squeeze(1)
-            print(f"Images shape after squeezing: {images.shape}")  # Debugowanie wymiarów obrazów
+        # Keep targets as list of tensors (bounding boxes can vary in number)
+        targets = list(targets)
 
-        # Keep targets as a list of tensors (do not stack, as sizes may vary)
-        if subdivisions > 1:
-            images = images.chunk(subdivisions, dim=0)
-            targets = [targets[i::subdivisions] for i in range(subdivisions)]
-
-        return images, list(targets)  # Return targets as a list
+        return images, targets
 

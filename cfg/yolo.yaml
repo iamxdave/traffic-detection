@@ -1,10 +1,9 @@
 model_type: yolo
 
 max_epochs: 100
-batch_size: 16
-subdivisions: 16
-width: 416
-height: 416
+batch_size: 64
+width: 608
+height: 608
 channels: 3
 momentum: 0.949
 decay: 0.0005
@@ -13,7 +12,7 @@ saturation: 1.5
 exposure: 1.5
 hue: 0.1
 
-learning_rate: 0.00261
+learning_rate: 0.0025
 burn_in: 1000
 max_batches: 500500
 policy: steps
@@ -78,12 +77,11 @@ layers:
     batch_norm: true
     activation: relu
 
-  - type: fully_connected
-    in_features: 1024
-    out_features: 1000
-    activation: relu
-
-  - type: fully_connected
-    in_features: 1000
-    out_features: 80
-    activation: softmax
+  - type: convolutional
+    in_channels: 1024
+    out_channels: 33
+    kernel_size: 1
+    stride: 1
+    padding: 0
+    batch_norm: false
+    activation: linear

@@ -7,6 +7,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision.transforms as T
 from functools import partial
+from tqdm import tqdm
 
 # import models
 from models.yolo_model import YOLO
@@ -54,7 +55,7 @@ def build_dataloader(config, dataset_config, train=True):
     else:
         raise ValueError(f"Unknown model_type {t}")
     
-    collate_fn = partial(dataset.collate_fn, subdivisions=config.get('subdivisions', 1))
+    collate_fn = partial(dataset.collate_fn)
 
     dataloader = DataLoader(
         dataset,
@@ -69,12 +70,12 @@ def build_dataloader(config, dataset_config, train=True):
     return dataloader
 
 # Training function with early stopping
-def train_model_with_early_stopping(model, config, train_loader, val_loader, patience=10, min_delta=0.001, save_path='best_model.pth'):
+def train_model_with_early_stopping(model, config, train_loader, val_loader, device,
+                                    patience=10, min_delta=0.001, save_path='best_model.pth'):
     torch.cuda.empty_cache()
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
     model = model.to(device)
 
-    subdivisions = config.get('subdivisions', 1)
     optimizer = optim.Adam(model.parameters(), lr=config['learning_rate'])
     criterion = torch.nn.CrossEntropyLoss()
 
@@ -85,56 +86,53 @@ def train_model_with_early_stopping(model, config, train_loader, val_loader, pat
         model.train()
         total_loss = 0
 
-        for batch in train_loader:
-            images, labels = batch
+        print(f"\nEpoch {epoch+1}/{config['max_epochs']}")
+        train_loader_tqdm = tqdm(train_loader, desc="Training", leave=False)
 
-            # Jeśli subdivisions > 1, images to tuple -> sklej
-            if isinstance(images, (tuple, list)):
-                images = torch.cat(images, dim=0)
+        for images, labels in train_loader_tqdm:
             images = images.to(device)
-
-            # Labels - lista tensorów
-            if isinstance(labels, (tuple, list)):
-                labels = [label[0] if isinstance(label, tuple) else label for label in labels]  # odpakuj jeśli tuple
-                labels = torch.cat(labels, dim=0) if isinstance(labels[0], torch.Tensor) else labels
-                labels = labels.to(device) if isinstance(labels, torch.Tensor) else labels
-            else:
-                labels = labels.to(device)
+            labels = [label.to(device) for label in labels]
 
             optimizer.zero_grad()
             outputs = model(images)
 
-            loss = compute_loss(outputs, labels, criterion)
+            if hasattr(model, 'compute_loss'):
+                loss = model.compute_loss(outputs, labels)
+            else:
+                if isinstance(labels, list):
+                    labels = torch.cat(labels, dim=0)
+                loss = criterion(outputs.view(-1, outputs.shape[-1]), labels.view(-1))
+
             loss.backward()
             optimizer.step()
             total_loss += loss.item()
 
+            train_loader_tqdm.set_postfix(loss=loss.item())
+
         # Validation
         model.eval()
         val_loss = 0
+        val_loader_tqdm = tqdm(val_loader, desc="Validation", leave=False)
         with torch.no_grad():
-            for val_batch in val_loader:
-                val_images, val_labels = val_batch
-
-                if isinstance(val_images, (tuple, list)):
-                    val_images = torch.cat(val_images, dim=0)
+            for val_images, val_labels in val_loader_tqdm:
                 val_images = val_images.to(device)
-
-                if isinstance(val_labels, (tuple, list)):
-                    val_labels = [label[0] if isinstance(label, tuple) else label for label in val_labels]
-                    val_labels = torch.cat(val_labels, dim=0) if isinstance(val_labels[0], torch.Tensor) else val_labels
-                    val_labels = val_labels.to(device) if isinstance(val_labels, torch.Tensor) else val_labels
-                else:
-                    val_labels = val_labels.to(device)
-
+                val_labels = [lbl.to(device) for lbl in val_labels]
                 val_outputs = model(val_images)
-                val_loss += compute_loss(val_outputs, val_labels, criterion).item()
+
+                if hasattr(model, 'compute_loss'):
+                    val_batch_loss = model.compute_loss(val_outputs, val_labels)
+                else:
+                    if isinstance(val_labels, list):
+                        val_labels = torch.cat(val_labels, dim=0)
+                    val_batch_loss = criterion(val_outputs.view(-1, val_outputs.shape[-1]), val_labels.view(-1))
+
+                val_loss += val_batch_loss.item()
+                val_loader_tqdm.set_postfix(val_loss=val_batch_loss.item())
 
         avg_train_loss = total_loss / len(train_loader)
         avg_val_loss = val_loss / len(val_loader)
-        print(f"Epoch {epoch+1}/{config['max_epochs']} - Train Loss: {avg_train_loss:.4f} - Val Loss: {avg_val_loss:.4f}")
+        print(f"Train Loss: {avg_train_loss:.4f} | Val Loss: {avg_val_loss:.4f}")
 
-        # Early stopping
         if avg_val_loss < best_val_loss - min_delta:
             best_val_loss = avg_val_loss
             epochs_without_improvement = 0
@@ -146,21 +144,8 @@ def train_model_with_early_stopping(model, config, train_loader, val_loader, pat
             print(f"Early stopping triggered after {epoch+1} epochs.")
             break
 
-    # Load best model
     model.load_state_dict(torch.load(save_path))
     return model
-
-
-def compute_loss(outputs, labels, criterion):
-    """
-    Oblicza stratę dla modelu. Funkcja musi być dostosowana do specyficznego przypadku,
-    np. detekcji obiektów, gdzie `labels` może być listą tensorów.
-    """
-    # Przykład dla klasyfikacji (dostosuj do detekcji obiektów)
-    if isinstance(labels, list):
-        # Jeśli labels to lista, przekształć ją w odpowiedni format
-        labels = torch.cat(labels, dim=0)  # Połącz listę w jeden tensor, jeśli to możliwe
-    return criterion(outputs, labels)
 
 def save_model(model, save_path):
     torch.save(model.state_dict(), save_path)
