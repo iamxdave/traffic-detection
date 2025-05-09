@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from PIL import Image
 import torch
 from torch.utils.data import Dataset
@@ -10,23 +11,32 @@ class YOLODataset(Dataset):
         self.labels = []
         self.img_size = img_size  # (width, height)
 
+        txt_path = Path(txt_file).resolve()
+
         # Read the txt file with image paths
-        with open(txt_file, 'r') as f:
+        with open(txt_path, 'r') as f:
             lines = f.readlines()
 
         for line in lines:
-            img_path = line.strip()
-            if not os.path.isabs(img_path):
-                img_path = os.path.join(os.path.dirname(txt_file), img_path)
-            img_path = os.path.normpath(img_path)
+            img_rel_path = line.strip()
+            
+            # Check if we're on a Windows machine and adjust paths
+            if os.name == 'nt':  # Windows
+                img_rel_path = img_rel_path.replace('/', '\\')
+            else:  # Unix-based OS (Mac/Linux)
+                img_rel_path = img_rel_path.replace('\\', '/')
+
+            # Construct the absolute path
+            img_path = (txt_path.parent / img_rel_path).resolve()
+            label_path = img_path.with_suffix('.txt')
             self.imgs.append(img_path)
-            self.labels.append(img_path.replace('.jpg', '.txt'))
+            self.labels.append(label_path)
 
         print(f"Loaded {len(self.imgs)} images and {len(self.labels)} labels")
 
         if len(self.imgs) == 0:
             raise ValueError(f"Dataset is empty, check your paths or txt file: {txt_file}")
-        
+
         # Default transform if none is provided
         if transform is None:
             self.transform = transforms.Compose([
@@ -35,43 +45,31 @@ class YOLODataset(Dataset):
             ])
         else:
             self.transform = transform
-    
+
     def __len__(self):
         return len(self.imgs)
-    
-    def __getitem__(self, idx):
-        print(f"Fetching item at index {idx}")
 
+    def __getitem__(self, idx):
         img_path = self.imgs[idx]
         label_path = self.labels[idx]
-        
+
         # Load and transform image
         image = Image.open(img_path).convert('RGB')
         image = self.transform(image)
-        print(f"Image shape: {image.shape}")
 
         # Load and process label
         boxes = []
-        with open(label_path, 'r') as f:
-            for line in f.readlines():
-                parts = list(map(float, line.strip().split()))
-                boxes.append(parts)  # assuming format [class, x_center, y_center, width, height]
+        if label_path.exists():
+            with open(label_path, 'r') as f:
+                for line in f.readlines():
+                    parts = list(map(float, line.strip().split()))
+                    boxes.append(parts)
 
-        if len(boxes) == 0:
-            boxes = torch.zeros((0, 5))  # No objects in image
-        else:
-            boxes = torch.tensor(boxes, dtype=torch.float32)
-        print(f"Boxes shape: {boxes.shape}")
-
+        boxes = torch.tensor(boxes, dtype=torch.float32) if boxes else torch.zeros((0, 5))
         return image, boxes
-    
+
     def collate_fn(self, batch):
         images, targets = zip(*batch)
-    
         images = torch.stack(images, 0)
-
-        # Keep targets as list of tensors (bounding boxes can vary in number)
-        targets = list(targets)
-
+        targets = list(targets)  # bounding boxes are variable
         return images, targets
-

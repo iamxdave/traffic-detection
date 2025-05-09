@@ -1,7 +1,7 @@
 model_type: yolo
 
 max_epochs: 100
-batch_size: 64
+batch_size: 32
 width: 608
 height: 608
 channels: 3
@@ -12,15 +12,18 @@ saturation: 1.5
 exposure: 1.5
 hue: 0.1
 
-learning_rate: 0.0025
+learning_rate: 0.002
 burn_in: 1000
 max_batches: 500500
 policy: steps
-steps: [400000, 450000]
+steps: [40000, 45000]
 scales: [0.1, 0.1]
 
 mosaic: 1
 cutmix: 1  
+
+num_classes: 6
+num_anchors: 3
 
 layers:
   - type: convolutional
@@ -61,15 +64,6 @@ layers:
 
   - type: convolutional
     in_channels: 128
-    out_channels: 256
-    kernel_size: 3
-    stride: 1
-    padding: 1
-    batch_norm: true
-    activation: relu
-
-  - type: convolutional
-    in_channels: 256
     out_channels: 256
     kernel_size: 3
     stride: 1
