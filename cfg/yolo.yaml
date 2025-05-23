@@ -1,81 +1,14 @@
-model_type: yolo
-
-max_epochs: 100
-batch_size: 32
-width: 608
-height: 608
-channels: 3
-momentum: 0.949
-decay: 0.0005
-angle: 0
-saturation: 1.5
-exposure: 1.5
-hue: 0.1
-
-learning_rate: 0.002
-burn_in: 1000
-max_batches: 500500
-policy: steps
-steps: [40000, 45000]
-scales: [0.1, 0.1]
-
-mosaic: 1
-cutmix: 1  
-
-num_classes: 6
-num_anchors: 3
-
-layers:
-  - type: convolutional
-    in_channels: 3
-    out_channels: 16
-    kernel_size: 7
-    stride: 2
-    padding: 3
-    batch_norm: true
-    activation: relu
-
-  - type: convolutional
-    in_channels: 16
-    out_channels: 32
-    kernel_size: 3
-    stride: 1
-    padding: 1
-    batch_norm: true
-    activation: relu
-
-  - type: convolutional
-    in_channels: 32
-    out_channels: 64
-    kernel_size: 3
-    stride: 1
-    padding: 1
-    batch_norm: true
-    activation: relu
-
-  - type: convolutional
-    in_channels: 64
-    out_channels: 128
-    kernel_size: 3
-    stride: 1
-    padding: 1
-    batch_norm: true
-    activation: relu
-
-  - type: convolutional
-    in_channels: 128
-    out_channels: 256
-    kernel_size: 3
-    stride: 1
-    padding: 1
-    batch_norm: true
-    activation: relu
-
-  - type: convolutional
-    in_channels: 256
-    out_channels: 33
-    kernel_size: 1
-    stride: 1
-    padding: 0
-    batch_norm: false
-    activation: linear
+batch: 64
+epochs: 50
+fliplr: 0.015
+hsv_h: 0.011
+hsv_s: 0.95
+hsv_v: 0.45
+img_size: 800
+lr: 0.01
+mixup: 0.4
+momentum: 0.8
+mosaic: 0.65
+shear: 0.4
+translate: 0.05
+weight_decay: 0.0045

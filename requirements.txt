@@ -1,20 +1,41 @@
 # Core dependencies
-numpy
+numpy<2.0
 pandas
 opencv-python
 matplotlib
 tqdm
 ipykernel
+pyyaml
 
 # Deep Learning Libraries
-torch
-torchvision
-torchaudio
-tensorflow  # For RNN/CNN (Keras-based)
+torch==2.2.2+cu121
+torchvision==0.17.2+cu121
+torchaudio==2.2.2+cu121
+--extra-index-url https://download.pytorch.org/whl/cu121
+
+tensorflow
 keras
 
 # YOLO
 ultralytics
+optuna
 
 # Utilities
 scikit-learn
+seaborn
+albumentations
+pycocotools
+requests
+
+# For RCNN, SSD, DETR
+icecream
+pillow
+imgaug
+einops
+transformers==4.37.2
+accelerate==0.28.0
+timm
+
+# Additional dependencies for detection pipelines
+tensorboard
+labelme
