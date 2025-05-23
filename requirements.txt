@@ -39,3 +39,5 @@ timm
 # Additional dependencies for detection pipelines
 tensorboard
 labelme
+
+gdown
