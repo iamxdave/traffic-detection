@@ -1,5 +1,5 @@
-batch: 64
-epochs: 50
+batch: 32
+epochs: 34
 fliplr: 0.015
 hsv_h: 0.011
 hsv_s: 0.95

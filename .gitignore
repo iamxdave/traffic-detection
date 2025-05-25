@@ -175,3 +175,7 @@ cython_debug/
 
 dataset/*
 venv/*
+optuna_yolo_tune/*
+runs_rcnn/*
+runs_yolo/*
+runs_ssd/*

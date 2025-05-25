@@ -34,7 +34,8 @@ class TrafficDataset(Dataset):
 
         target = {
             'boxes': boxes,
-            'labels': labels
+            'labels': labels,
+            'image_id': torch.tensor(idx)
         }
 
         img = self.transforms(img) if callable(self.transforms) else T.ToTensor()(img)

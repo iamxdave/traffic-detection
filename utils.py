@@ -29,4 +29,9 @@ def get_transform(train, cfg):
         ))
 
     transforms.append(T.ToTensor())
+
+    # ⬇️ NAJWAŻNIEJSZE DODANIE: NORMALIZACJA DO ImageNet
+    transforms.append(T.Normalize(mean=[0.485, 0.456, 0.406],
+                                  std=[0.229, 0.224, 0.225]))
+
     return T.Compose(transforms)
